@@ -45,11 +45,11 @@ unique_labels.each do |l|
 	begin
 		client.add_label(repo, l, ISSUE_COLORS.sample)
 	rescue Octokit::UnprocessableEntity => e
-		puts "Unable to add #{l} as a label. Reason: #{e.errors['code']}"
+		puts "Unable to add #{l} as a label. Reason: #{e.errors.first[:code]}"
 	end
 end
 
-issues.each do |issue|
+issues do |issue|
 	puts "creating issue '#{issue.title}'"
 	client.create_issue(repo, issue.title, issue.body, {:labels => issue.labels})
 end
