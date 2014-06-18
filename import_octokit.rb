@@ -4,9 +4,7 @@ require 'OctoKit'
 require 'CSV'
 require 'highline/import'
 
-
-# my csv didn't have any of the comments, so didn't have to handle those?
-
+# because github didn't display my random colors
 ISSUE_COLORS = ['d4c5f9','e11d21','eb6420','fbca04','009800','006b75','207de5',
 				'0052cc','5319e7','f7c6c7','fad8c7','fef2c0','bfe5bf','bfdadc',
 				'c7def8', 'bfd4f2']
@@ -29,29 +27,38 @@ user.login
 
 repo = get_input('Enter repo (owner/repo_name) >')
 
-Issue = Struct.new(:title, :body, :labels, :comment)
+Issue = Struct.new(:title, :body, :labels, :comments)
 issues = Array.new
 
-CSV.foreach 'hrt_issues.csv', headers: true do |row|
-	labels = row['Labels'].split(',')
-	labels << row['Story Type']
-	comment = row['Comment'].nil? ? nil : row['Comment']
-	issues << Issue.new(row['Story'], row['Description'], labels, comment)
+CSV.foreach issues_csv, headers: true do |row|
+	labels = [row['Story Type']]
+	labels << row['Labels'].split(',') unless row['Labels'].nil?
+	# lol let's hack around the duplicate column names from pivotal tracker
+	comments_col = row.index('Comment')
+	has_comments = !row['Comment', comments_col].nil?
+	comments = []
+	while has_comments do
+		comments << row['Comment', comments_col]
+		comments_col += 1
+		has_comments = !row['Comment', comments_col].nil?
+	end
+	issues << Issue.new(row['Story'], row['Description'], labels, comments)
 end
 
 unique_labels = issues.map{ |i| i.labels }.flatten.map{|j| j.strip}.uniq
-puts unique_labels.to_s
+puts "adding labels: #{unique_labels.to_s}"
 unique_labels.each do |l|
 	begin
-		client.add_label(repo, l, ISSUE_COLORS.sample)
+		#client.add_label(repo, l, ISSUE_COLORS.sample)
 	rescue Octokit::UnprocessableEntity => e
 		puts "Unable to add #{l} as a label. Reason: #{e.errors.first[:code]}"
 	end
 end
 
-issues do |issue|
+issues.each do |issue|
 	puts "creating issue '#{issue.title}'"
-	client.create_issue(repo, issue.title, issue.body, {:labels => issue.labels})
+	issue_number = client.create_issue(repo, issue.title, issue.body, {:labels => issue.labels.join(',')}).number
+	issue.comments.each do |comment|
+		client.add_comment(repo, issue_number, comment)
+	end
 end
-
-# TODO add comments
