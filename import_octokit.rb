@@ -4,8 +4,12 @@ require 'OctoKit'
 require 'CSV'
 require 'highline/import'
 
-# requires fiddling with the labels later, not as neat with those
+
 # my csv didn't have any of the comments, so didn't have to handle those?
+
+ISSUE_COLORS = ['d4c5f9','e11d21','eb6420','fbca04','009800','006b75','207de5',
+				'0052cc','5319e7','f7c6c7','fad8c7','fef2c0','bfe5bf','bfdadc',
+				'c7def8', 'bfd4f2']
 
 def get_input(prompt="Enter >",show = true)
 	ask(prompt) {|q| q.echo = show}
@@ -35,14 +39,14 @@ CSV.foreach 'hrt_issues.csv', headers: true do |row|
 	issues << Issue.new(row['Story'], row['Description'], labels, comment)
 end
 
-unique_labels = issues.map{ |i| i.labels.each{|l| l.trim} }.uniq
+unique_labels = issues.map{ |i| i.labels }.flatten.map{|j| j.strip}.uniq
 puts unique_labels.to_s
 unique_labels.each do |l|
-    color = ''
-    3.times { color << "%02x" % rand(255) }
-    puts l.to_s
-    puts color.to_s
-	#client.add_label(repo, l, color)
+	begin
+		client.add_label(repo, l, ISSUE_COLORS.sample)
+	rescue Octokit::UnprocessableEntity => e
+		puts "Unable to add #{l} as a label. Reason: #{e.errors['code']}"
+	end
 end
 
 issues.each do |issue|
