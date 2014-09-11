@@ -45,7 +45,7 @@ CSV.foreach issues_csv, headers: true do |row|
 	issues << Issue.new(row['Story'], row['Description'], labels, comments)
 end
 
-unique_labels = issues.map{ |i| i.labels }.flatten.map{|j| j.strip}.uniq
+unique_labels = issues.map{ |i| i.labels }.flatten.map{|j| j.to_s.strip}.uniq
 puts "adding labels: #{unique_labels.to_s}"
 unique_labels.each do |l|
 	begin
