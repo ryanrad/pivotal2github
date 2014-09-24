@@ -31,7 +31,7 @@ Issue = Struct.new(:title, :body, :labels, :comments)
 issues = Array.new
 
 CSV.foreach issues_csv, headers: true do |row|
-	labels = [row['Story Type']]
+	labels = [row['Type']]
 	labels << row['Labels'].split(',') unless row['Labels'].nil?
 	# lol let's hack around the duplicate column names from pivotal tracker
 	comments_col = row.index('Comment')
