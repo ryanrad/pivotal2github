@@ -42,7 +42,7 @@ CSV.foreach issues_csv, headers: true do |row|
 		comments_col += 1
 		has_comments = !row['Comment', comments_col].nil?
 	end
-	issues << Issue.new(row['Story'], row['Description'], labels, comments)
+	issues << Issue.new(row['Title'], row['Description'], labels, comments)
 end
 
 unique_labels = issues.map{ |i| i.labels }.flatten.map{|j| j.to_s.strip}.uniq
