@@ -32,6 +32,7 @@ issues = Array.new
 
 CSV.foreach issues_csv, headers: true do |row|
 	labels = [row['Type']]
+	labels << row['Current State']
 	labels << row['Labels'].split(',') unless row['Labels'].nil?
 	# lol let's hack around the duplicate column names from pivotal tracker
 	comments_col = row.index('Comment')
